@@ -11,12 +11,15 @@
     "dev:both": "start cmd /k npm run dev:hr && start cmd /k npm run dev:employee",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "server": "node server/index.js",
+    "server:dev": "node --watch server/index.js"
   },
   "dependencies": {
     "better-sqlite3": "^12.11.1",
     "concurrently": "^10.0.3",
     "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "jspdf": "^4.2.1",
     "lucide-react": "^1.23.0",
