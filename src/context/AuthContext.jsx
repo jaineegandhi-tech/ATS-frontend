@@ -1,26 +1,57 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { STORAGE_KEYS, getStore, setStore, addLog } from '../utils/store';
+import { createContext, useContext, useState } from 'react';
+import { STORAGE_KEYS, getStore } from '../utils/store';
+import { apiFetch, saveTokens, clearTokens } from '../utils/api';
 
 const AuthContext = createContext(null);
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.CURRENT_USER)); } catch { return null; }
   });
 
-  function login(username, password) {
-    const employees = getStore(STORAGE_KEYS.EMPLOYEES);
-    const emp = employees.find(e => e.username === username && e.password === password);
-    if (!emp) return { error: 'Invalid username or password.' };
-    if (emp.status === 'inactive') return { error: 'Your account has been deactivated. Please contact HR.' };
-    localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(emp));
-    setUser(emp);
-    addLog('Login', emp.id, `${emp.firstName} ${emp.lastName} logged in`);
-    return { success: true, needsProfile: !emp.profileCompleted };
+  async function login(username, password) {
+    // Try backend first
+    try {
+      const res = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) return { error: data.error || 'Login failed.' };
+
+      saveTokens(data.accessToken, data.refreshToken);
+      localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(data.user));
+      setUser(data.user);
+      return { success: true };
+    } catch {
+      // Backend unreachable — fall back to localStorage
+      const { getStore, addLog } = await import('../utils/store');
+      const employees = getStore(STORAGE_KEYS.EMPLOYEES);
+      const emp = employees.find(e => e.username === username && e.password === password);
+      if (!emp) return { error: 'Invalid username or password.' };
+      if (emp.status === 'inactive') return { error: 'Your account has been deactivated. Please contact HR.' };
+      localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(emp));
+      setUser(emp);
+      addLog('Login', emp.id, `${emp.firstName} ${emp.lastName} logged in`);
+      return { success: true };
+    }
   }
 
-  function logout() {
-    if (user) addLog('Logout', user.id, `${user.firstName} ${user.lastName} logged out`);
+  async function logout() {
+    try {
+      if (user) {
+        await apiFetch('/auth/logout', {
+          method: 'POST',
+          body: JSON.stringify({ userId: user.id, name: `${user.firstName} ${user.lastName}` }),
+        });
+      }
+    } catch { /* ignore network errors on logout */ }
+
+    clearTokens();
     localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
     setUser(null);
   }
