@@ -1,37 +1,76 @@
 import { Router } from 'express';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import db from '../db.js';
 
 const router = Router();
 
+function generateTokens(user) {
+  const payload = { id: user.id, username: user.username, role: user.role };
+  const accessToken = jwt.sign(payload, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN || '15m',
+  });
+  const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
+    expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
+  });
+  return { accessToken, refreshToken };
+}
+
+function safeUser(user) {
+  const { password, ...rest } = user;
+  return rest;
+}
+
 // POST /api/auth/login
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
   const { username, password } = req.body;
-  const emp = db.prepare('SELECT * FROM employees WHERE username = ? AND password = ?').get(username, password);
-  if (!emp) return res.status(401).json({ error: 'Invalid username or password.' });
-  if (emp.status === 'inactive') return res.status(403).json({ error: 'Your account has been deactivated. Please contact HR.' });
+  if (!username || !password) return res.status(400).json({ error: 'Username and password are required.' });
 
-  // Parse JSON fields
-  emp.emergencyContact = parseJSON(emp.emergencyContact, {});
+  const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+  if (!user) return res.status(401).json({ error: 'Invalid username or password.' });
+  if (user.status === 'inactive') return res.status(403).json({ error: 'Your account has been deactivated. Please contact admin.' });
 
-  // Log activity
-  db.prepare(`INSERT INTO activity_logs (action, userId, details, timestamp) VALUES (?, ?, ?, ?)`)
-    .run('Login', emp.id, `${emp.firstName} ${emp.lastName} logged in`, new Date().toISOString());
+  const passwordMatch = await bcrypt.compare(password, user.password);
+  if (!passwordMatch) return res.status(401).json({ error: 'Invalid username or password.' });
 
-  res.json({ success: true, user: emp, needsProfile: !emp.profileCompleted });
+  const { accessToken, refreshToken } = generateTokens(user);
+
+  db.prepare(`INSERT INTO activity_logs (action, userId, details, createdAt) VALUES (?, ?, ?, ?)`)
+    .run('Login', user.id, `${user.firstName} ${user.lastName} logged in`, new Date().toISOString());
+
+  res.json({
+    success: true,
+    accessToken,
+    refreshToken,
+    user: safeUser(user),
+  });
+});
+
+// POST /api/auth/refresh
+router.post('/refresh', (req, res) => {
+  const { refreshToken } = req.body;
+  if (!refreshToken) return res.status(400).json({ error: 'Refresh token required.' });
+
+  try {
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(decoded.id);
+    if (!user || user.status === 'inactive') return res.status(401).json({ error: 'User not found or inactive.' });
+
+    const { accessToken, refreshToken: newRefreshToken } = generateTokens(user);
+    res.json({ accessToken, refreshToken: newRefreshToken });
+  } catch {
+    res.status(401).json({ error: 'Invalid or expired refresh token.' });
+  }
 });
 
 // POST /api/auth/logout
 router.post('/logout', (req, res) => {
   const { userId, name } = req.body;
   if (userId) {
-    db.prepare(`INSERT INTO activity_logs (action, userId, details, timestamp) VALUES (?, ?, ?, ?)`)
+    db.prepare(`INSERT INTO activity_logs (action, userId, details, createdAt) VALUES (?, ?, ?, ?)`)
       .run('Logout', userId, `${name || userId} logged out`, new Date().toISOString());
   }
   res.json({ success: true });
 });
-
-function parseJSON(val, fallback) {
-  try { return val ? JSON.parse(val) : fallback; } catch { return fallback; }
-}
 
 export default router;
