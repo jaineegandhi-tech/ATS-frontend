@@ -284,11 +284,11 @@ Immediate Joining\t${candidate.immediateJoining ? 'Yes' : 'No'}`;
         </div>
       </div>
 
-      {/* Extracted Candidate Information (HR Only) */}
-      {isHR && (candidate.yearsOfExperience || candidate.skills || candidate.expertise || candidate.role || candidate.currentCTC || candidate.expectedCTC || candidate.noticePeriod) && (
+      {/* Candidate Information (HR Only) */}
+      {isHR && (candidate.yearsOfExperience || candidate.skills || candidate.expertise || candidate.role || candidate.currentCTC || candidate.expectedCTC || candidate.noticePeriod || telephonicRecord) && (
         <div className="card space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="section-title mb-0">Candidate Information (Extracted)</h2>
+            <h2 className="section-title mb-0">Candidate Information</h2>
             <div className="flex items-center gap-2">
               <button
                 onClick={copyExtractedData}
@@ -344,53 +344,52 @@ Immediate Joining\t${candidate.immediateJoining ? 'Yes' : 'No'}`;
               )}
             </div>
           )}
-        </div>
-      )}
-
-      {/* Telephonic Interview Record */}
-      {telephonicRecord && (
-        <div className="card space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-violet-100 flex items-center justify-center">
-                <Phone size={14} className="text-violet-600" />
+          {/* Telephonic Interview Record */}
+          {telephonicRecord && (
+            <div className="space-y-3 pt-2 border-t border-gray-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-violet-100 flex items-center justify-center">
+                    <Phone size={14} className="text-violet-600" />
+                  </div>
+                  <h3 className="section-title mb-0">Telephonic Interview</h3>
+                </div>
+                <button onClick={exportTelephonic} className="btn btn-secondary btn-sm gap-1.5">
+                  <Download size={13} /> Export CSV
+                </button>
               </div>
-              <h2 className="section-title mb-0">Telephonic Interview</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-100">
+                    <tr>
+                      {['Call Date', 'Call Time', 'Duration', 'Called By', 'Outcome', 'Current CTC', 'Expected CTC', 'Notice Period', 'Imm. Joiner', 'Notes'].map(h => (
+                        <th key={h} className="table-th whitespace-nowrap">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="hover:bg-gray-50/60">
+                      <td className="table-td">{telephonicRecord.callDate || '—'}</td>
+                      <td className="table-td">{telephonicRecord.callTime || '—'}</td>
+                      <td className="table-td">{telephonicRecord.duration ? `${telephonicRecord.duration} min` : '—'}</td>
+                      <td className="table-td">{telephonicRecord.calledBy || '—'}</td>
+                      <td className="table-td">
+                        <span className={`badge ${
+                          telephonicRecord.outcome === 'Positive' ? 'badge-green' :
+                          telephonicRecord.outcome === 'Negative' ? 'badge-red' : 'badge-yellow'
+                        }`}>{telephonicRecord.outcome}</span>
+                      </td>
+                      <td className="table-td">{telephonicRecord.currentCTC || '—'}</td>
+                      <td className="table-td">{telephonicRecord.expectedCTC || '—'}</td>
+                      <td className="table-td">{telephonicRecord.noticePeriod || '—'}</td>
+                      <td className="table-td">{telephonicRecord.immediateJoiner ? 'Yes' : 'No'}</td>
+                      <td className="table-td max-w-[160px] truncate text-xs text-gray-500" title={telephonicRecord.notes}>{telephonicRecord.notes || '—'}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
-            <button onClick={exportTelephonic} className="btn btn-secondary btn-sm gap-1.5">
-              <Download size={13} /> Export CSV
-            </button>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-100">
-                <tr>
-                  {['Call Date', 'Call Time', 'Duration', 'Called By', 'Outcome', 'Current CTC', 'Expected CTC', 'Notice Period', 'Imm. Joiner', 'Notes'].map(h => (
-                    <th key={h} className="table-th whitespace-nowrap">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="hover:bg-gray-50/60">
-                  <td className="table-td">{telephonicRecord.callDate || '—'}</td>
-                  <td className="table-td">{telephonicRecord.callTime || '—'}</td>
-                  <td className="table-td">{telephonicRecord.duration ? `${telephonicRecord.duration} min` : '—'}</td>
-                  <td className="table-td">{telephonicRecord.calledBy || '—'}</td>
-                  <td className="table-td">
-                    <span className={`badge ${
-                      telephonicRecord.outcome === 'Positive' ? 'badge-green' :
-                      telephonicRecord.outcome === 'Negative' ? 'badge-red' : 'badge-yellow'
-                    }`}>{telephonicRecord.outcome}</span>
-                  </td>
-                  <td className="table-td">{telephonicRecord.currentCTC || '—'}</td>
-                  <td className="table-td">{telephonicRecord.expectedCTC || '—'}</td>
-                  <td className="table-td">{telephonicRecord.noticePeriod || '—'}</td>
-                  <td className="table-td">{telephonicRecord.immediateJoiner ? 'Yes' : 'No'}</td>
-                  <td className="table-td max-w-[160px] truncate text-xs text-gray-500" title={telephonicRecord.notes}>{telephonicRecord.notes || '—'}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          )}
         </div>
       )}
 
