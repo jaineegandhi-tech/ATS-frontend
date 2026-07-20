@@ -37,6 +37,9 @@ export default function Candidates() {
     if (user?.role === ROLES.IT) {
       return ['Offered', 'Offer Sent', 'Offer Accepted', 'Joined'].includes(c.status);
     }
+    if (user?.role === ROLES.HR) {
+      return !c.assignedTo || c.assignedTo === user.id || c.createdBy === user.id;
+    }
     return true;
   });
 

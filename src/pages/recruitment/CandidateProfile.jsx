@@ -7,7 +7,7 @@ import { formatDate } from '../../utils/helpers';
 import StatusBadge from '../../components/shared/StatusBadge';
 import Modal from '../../components/shared/Modal';
 import ResumeExtractorModal from '../../components/shared/ResumeExtractorModal';
-import { Download, CalendarDays, Pencil, Star, Send, CheckCircle, FileText, Copy, Phone } from 'lucide-react';
+import { Download, CalendarDays, Pencil, Star, Send, CheckCircle, FileText, Copy, Phone, UserCheck } from 'lucide-react';
 import { ROLES, isRecruiter, isHeadHR } from '../../utils/roles';
 
 export default function CandidateProfile() {
@@ -26,6 +26,8 @@ export default function CandidateProfile() {
   const [itModal, setItModal] = useState(false);
   const [showExtractor, setShowExtractor] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [reassignModal, setReassignModal] = useState(false);
+  const [reassignTo, setReassignTo] = useState('');
   const [, forceUpdate] = useState(0);
 
   const candidate = getStore(STORAGE_KEYS.CANDIDATES).find(c => c.id === id);
@@ -207,6 +209,27 @@ Immediate Joining\t${candidate.immediateJoining ? 'Yes' : 'No'}`;
 
   const STATUSES = ['New Candidate', 'Screening', 'Interview Scheduled', 'Interview In Progress', 'Interview Completed', 'Passed', 'Failed', 'On Hold', 'Rejected', 'Next Round Scheduled', 'Selected', 'Offered', 'Joined', 'Not Joined'];
   const managerOptions = employees.filter(e => e.status !== 'inactive' && e.role !== ROLES.IT);
+  const hrList = employees.filter(e => e.role === ROLES.HR && e.status !== 'inactive');
+
+  function reassignCandidate() {
+    if (!reassignTo) return;
+    const now = new Date().toISOString();
+    const newHR = employees.find(e => e.id === reassignTo);
+    setStore(STORAGE_KEYS.CANDIDATES, getStore(STORAGE_KEYS.CANDIDATES).map(c => c.id === id ? {
+      ...c,
+      assignedTo: reassignTo,
+      timeline: [...(c.timeline || []), { action: `Reassigned to ${newHR?.firstName} ${newHR?.lastName}`, by: user.id, at: now }],
+    } : c));
+    addRecruitmentNotification(
+      reassignTo,
+      `You have been assigned candidate ${candidate.firstName} ${candidate.lastName} (${candidate.appliedPosition}). Please continue the recruitment process.`,
+      'candidate_reassigned',
+      id
+    );
+    addLog('Candidate Reassigned', user.id, `${candidate.firstName} ${candidate.lastName} reassigned to ${newHR?.firstName} ${newHR?.lastName}`);
+    setReassignModal(false);
+    forceUpdate(n => n + 1);
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-5">
@@ -234,16 +257,19 @@ Immediate Joining\t${candidate.immediateJoining ? 'Yes' : 'No'}`;
           {candidate.resume && (
             <button className="btn-secondary btn btn-sm" onClick={downloadResume}><Download size={13} /> Resume</button>
           )}
-          {isHR && (
-            <>
-              <button className="btn-secondary btn btn-sm" onClick={() => navigate(`/candidates/${id}/edit`)}><Pencil size={13} /> Edit</button>
-              <button className="btn-secondary btn btn-sm" onClick={() => navigate(`/candidates/${id}/schedule`)}><CalendarDays size={13} /> {hasScheduledInterview ? 'Reschedule' : 'Schedule'}</button>
-              {['Selected', 'Offered'].includes(candidate.status) && (
-                <button className="btn-success btn btn-sm" onClick={() => setJoiningModal(true)}><Send size={13} /> Joining Details</button>
+              {isHR && (
+              <>
+                <button className="btn-secondary btn btn-sm" onClick={() => navigate(`/candidates/${id}/edit`)}><Pencil size={13} /> Edit</button>
+                <button className="btn-secondary btn btn-sm" onClick={() => navigate(`/candidates/${id}/schedule`)}><CalendarDays size={13} /> {hasScheduledInterview ? 'Reschedule' : 'Schedule'}</button>
+                {['Selected', 'Offered'].includes(candidate.status) && (
+                  <button className="btn-success btn btn-sm" onClick={() => setJoiningModal(true)}><Send size={13} /> Joining Details</button>
+                )}
+                <button className="btn-primary btn btn-sm" onClick={() => { setNewStatus(candidate.status); setStatusModal(true); }}>Update Status</button>
+              </>
               )}
-              <button className="btn-primary btn btn-sm" onClick={() => { setNewStatus(candidate.status); setStatusModal(true); }}>Update Status</button>
-            </>
-          )}
+              {isHeadHR(user) && (
+                <button className="btn-secondary btn btn-sm" onClick={() => { setReassignTo(candidate.assignedTo || ''); setReassignModal(true); }}><UserCheck size={13} /> Reassign HR</button>
+              )}
           {user?.role === ROLES.IT && candidate.joiningDetails && (
             <button className="btn-primary btn btn-sm" onClick={() => setItModal(true)}><CheckCircle size={13} /> Complete IT Setup</button>
           )}
@@ -491,6 +517,32 @@ Immediate Joining\t${candidate.immediateJoining ? 'Yes' : 'No'}`;
           </div>
         )}
       </div>
+
+      {/* Reassign HR Modal */}
+      {reassignModal && (
+        <Modal title="Reassign Candidate to Another HR" onClose={() => setReassignModal(false)} size="sm">
+          <div className="space-y-4">
+            <p className="text-sm text-gray-500">Select an HR to take over <strong>{candidate.firstName} {candidate.lastName}</strong>.</p>
+            {candidate.assignedTo && (() => {
+              const current = employees.find(e => e.id === candidate.assignedTo);
+              return current ? <p className="text-xs text-gray-400">Currently assigned to: <strong>{current.firstName} {current.lastName}</strong></p> : null;
+            })()}
+            <div>
+              <label className="label">Assign To</label>
+              <select className="input" value={reassignTo} onChange={e => setReassignTo(e.target.value)}>
+                <option value="">Select HR</option>
+                {hrList.map(e => (
+                  <option key={e.id} value={e.id}>{e.firstName} {e.lastName} — {e.designation}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex justify-end gap-3">
+              <button className="btn-secondary btn" onClick={() => setReassignModal(false)}>Cancel</button>
+              <button className="btn-primary btn" disabled={!reassignTo} onClick={reassignCandidate}><UserCheck size={14} /> Reassign</button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* Status Modal */}
       {statusModal && (
