@@ -1,6 +1,6 @@
 import { createContext, useContext, useState } from 'react';
 import { STORAGE_KEYS, getStore } from '../utils/store';
-import { apiFetch, saveTokens, clearTokens } from '../utils/api';
+import { saveTokens, clearTokens } from '../utils/api';
 
 const AuthContext = createContext(null);
 
@@ -42,15 +42,6 @@ export function AuthProvider({ children }) {
   }
 
   async function logout() {
-    try {
-      if (user) {
-        await apiFetch('/auth/logout', {
-          method: 'POST',
-          body: JSON.stringify({ userId: user.id, name: `${user.firstName} ${user.lastName}` }),
-        });
-      }
-    } catch { /* ignore network errors on logout */ }
-
     clearTokens();
     localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
     setUser(null);
