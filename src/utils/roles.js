@@ -20,7 +20,7 @@ export const MODULE_ACCESS = {
   candidates: [ROLES.HEAD_HR, ROLES.HR, ROLES.INTERVIEWER, ROLES.IT],
   interviewCalendar: [ROLES.HEAD_HR, ROLES.HR, ROLES.INTERVIEWER],
   interviewSchedule: [ROLES.HEAD_HR, ROLES.HR, ROLES.INTERVIEWER],
-  approvals: [ROLES.HEAD_HR, ROLES.HR, ROLES.RECEPTIONIST],
+  approvals: Object.values(ROLES),
   reports: [ROLES.HEAD_HR, ROLES.HR],
   pipeline: Object.values(ROLES),
   rolesPermissions: [ROLES.HEAD_HR],

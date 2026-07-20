@@ -22,7 +22,7 @@ const MODULES = [
   { key: 'candidates', to: '/candidates', icon: Users, label: 'Candidates' },
   { key: 'interviewCalendar', to: '/interview-calendar', icon: CalendarCheck, label: 'Interview Calendar' },
   { key: 'interviewSchedule', to: '/interview-schedule', icon: ListChecks, label: 'Interview Schedule' },
-  { key: 'approvals', to: '/approvals', icon: Stamp, label: 'Approvals' },
+  { key: 'approvals', to: '/approvals', icon: Stamp, label: 'Interview Activity' },
   { key: 'reports', to: '/reports', icon: BarChart3, label: 'Reports' },
   { key: 'pipeline', to: '/pipeline', icon: GitBranch, label: 'Pipeline' },
   { key: 'rolesPermissions', to: '/roles-permissions', icon: ShieldCheck, label: 'Roles & Permissions' },
