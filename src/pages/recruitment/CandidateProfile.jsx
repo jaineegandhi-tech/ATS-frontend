@@ -237,6 +237,14 @@ Immediate Joining\t${candidate.immediateJoining ? 'Yes' : 'No'}`;
         <button className="text-gray-400 hover:text-gray-600 text-sm" onClick={() => navigate('/candidates')}>← Back to Candidates</button>
       </div>
 
+      {/* Assigned-to-you banner */}
+      {user?.role === ROLES.HR && candidate.assignedTo === user.id && candidate.createdBy !== user.id && (
+        <div className="flex items-center gap-2 bg-violet-50 border border-violet-200 rounded-xl px-4 py-3">
+          <UserCheck size={15} className="text-violet-600 flex-shrink-0" />
+          <p className="text-sm text-violet-700">This candidate has been <strong>reassigned to you</strong>. You are now responsible for managing their recruitment process.</p>
+        </div>
+      )}
+
       {/* Header */}
       <div className="card flex items-start justify-between gap-4">
         <div className="flex items-start gap-4">

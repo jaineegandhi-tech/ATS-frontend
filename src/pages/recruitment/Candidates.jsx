@@ -5,7 +5,7 @@ import { getStore, setStore, STORAGE_KEYS, addLog, syncCandidateStatuses } from 
 import { useStorageSync } from '../../utils/useStorageSync';
 import { formatDate } from '../../utils/helpers';
 import StatusBadge from '../../components/shared/StatusBadge';
-import { Plus, Search, Eye, Pencil, CalendarDays, Download, Archive } from 'lucide-react';
+import { Plus, Search, Eye, Pencil, CalendarDays, Download, Archive, Users2, UserCheck } from 'lucide-react';
 import { ROLES, isRecruiter, isHeadHR } from '../../utils/roles';
 
 const ROUNDS = ['HR Round', 'Technical Round', 'Managerial Round', 'Final Round'];
@@ -19,11 +19,13 @@ export default function Candidates() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const isHR = isRecruiter(user);
+  const isOnlyHR = user?.role === ROLES.HR;
   const [search, setSearch] = useState('');
   const [filterDept, setFilterDept] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterRound, setFilterRound] = useState('');
   const [showArchived, setShowArchived] = useState(false);
+  const [myView, setMyView] = useState(true);
   const [, forceUpdate] = useState(0);
 
   const candidates = getStore(STORAGE_KEYS.CANDIDATES);
@@ -38,7 +40,8 @@ export default function Candidates() {
       return ['Offered', 'Offer Sent', 'Offer Accepted', 'Joined'].includes(c.status);
     }
     if (user?.role === ROLES.HR) {
-      return !c.assignedTo || c.assignedTo === user.id || c.createdBy === user.id;
+      if (myView) return c.assignedTo === user.id || c.createdBy === user.id;
+      return true; // All Candidates view
     }
     return true;
   });
@@ -78,11 +81,29 @@ export default function Candidates() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <h1 className="page-title">Candidates</h1>
-        {isHR && (
-          <button className="btn-primary btn" onClick={() => navigate('/candidates/add')}>
-            <Plus size={16} /> Add Candidate
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {isOnlyHR && (
+            <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+              <button
+                onClick={() => setMyView(true)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${myView ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                <UserCheck size={14} /> My Candidates
+              </button>
+              <button
+                onClick={() => setMyView(false)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${!myView ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                <Users2 size={14} /> All Candidates
+              </button>
+            </div>
+          )}
+          {isHR && (
+            <button className="btn-primary btn" onClick={() => navigate('/candidates/add')}>
+              <Plus size={16} /> Add Candidate
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Filters */}
@@ -115,7 +136,7 @@ export default function Candidates() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-100">
-              <tr>{['ID', 'Candidate', 'Applied Position', 'Interview Date', 'Time', 'Interviewer', 'Round', 'Status', ...(isHeadHR(user) ? ['Created By'] : []), 'Actions'].map(h => <th key={h} className="table-th">{h}</th>)}</tr>
+              <tr>{['ID', 'Candidate', 'Applied Position', 'Interview Date', 'Time', 'Interviewer', 'Round', 'Status', ...(isHeadHR(user) || (isOnlyHR && !myView) ? ['HR Owner'] : []), 'Actions'].map(h => <th key={h} className="table-th">{h}</th>)}</tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {filtered.length === 0 ? (
@@ -134,6 +155,9 @@ export default function Candidates() {
                       <div>
                         <p className="font-medium text-gray-900">{c.firstName} {c.lastName}</p>
                         <p className="text-xs text-gray-400">{c.email}</p>
+                        {isOnlyHR && c.assignedTo === user.id && c.createdBy !== user.id && (
+                          <span className="text-[10px] font-semibold text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded mt-0.5 inline-block">Assigned to you</span>
+                        )}
                       </div>
                     </td>
                     <td className="table-td">{c.appliedPosition}</td>
@@ -142,12 +166,13 @@ export default function Candidates() {
                     <td className="table-td text-xs">{interviewers}</td>
                     <td className="table-td">{c.currentRound || '—'}</td>
                     <td className="table-td"><StatusBadge status={c.status} /></td>
-                    {isHeadHR(user) && (
+                    {(isHeadHR(user) || (isOnlyHR && !myView)) && (
                       <td className="table-td text-xs">
-                        {c.createdBy ? (() => {
-                          const creator = getStore(STORAGE_KEYS.EMPLOYEES).find(e => e.id === c.createdBy);
-                          return creator ? `${creator.firstName} ${creator.lastName}` : c.createdBy;
-                        })() : '—'}
+                        {(() => {
+                          const ownerId = c.assignedTo || c.createdBy;
+                          const owner = getStore(STORAGE_KEYS.EMPLOYEES).find(e => e.id === ownerId);
+                          return owner ? `${owner.firstName} ${owner.lastName}` : '—';
+                        })()}
                       </td>
                     )}
                     <td className="table-td">
