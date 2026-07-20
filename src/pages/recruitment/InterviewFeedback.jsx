@@ -8,7 +8,7 @@ import { Star } from 'lucide-react';
 import { ROLES, isRecruiter } from '../../utils/roles';
 
 const ROUNDS = ['HR Round', 'Technical Round', 'Managerial Round', 'Final Round'];
-const DECISIONS = ['Passed', 'Failed', 'Hold', 'Move to Next Round'];
+const DECISIONS = ['Passed', 'Failed'];
 const RATINGS = ['Excellent', 'Good', 'Average', 'Poor'];
 
 function RatingStars({ value, onChange, max = 5 }) {
@@ -172,36 +172,7 @@ export default function InterviewFeedback() {
           </select>
         </div>
 
-        {/* Next Round Fields */}
-        {form.decision === 'Move to Next Round' && (
-          <div className="border border-primary/20 bg-primary/5 rounded-xl p-4 space-y-4">
-            <p className="text-xs font-bold text-primary uppercase tracking-wide">Next Round Details</p>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="label">Next Round</label>
-                <select className="input" value={form.nextRound} onChange={e => set('nextRound', e.target.value)}>
-                  <option value="">Select Round</option>
-                  {ROUNDS.map(r => <option key={r}>{r}</option>)}
-                </select>
-              </div>
-              <div><label className="label">Next Interview Date</label><input type="date" className="input" value={form.nextDate} onChange={e => set('nextDate', e.target.value)} /></div>
-              <div><label className="label">Next Interview Time</label><input type="time" className="input" value={form.nextTime} onChange={e => set('nextTime', e.target.value)} /></div>
-            </div>
-            <div>
-              <label className="label">Next Interviewer(s)</label>
-              <div className="grid grid-cols-2 gap-2 mt-1">
-                {nextRoundInterviewers.map(e => (
-                  <label key={e.id} className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors ${form.nextInterviewerIds.includes(e.id) ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'}`}>
-                    <input type="checkbox" checked={form.nextInterviewerIds.includes(e.id)} onChange={() => toggleInterviewer(e.id)} className="rounded" />
-                    <span className="text-sm text-gray-700">{e.firstName} {e.lastName}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="flex justify-end gap-3 pt-2">
+<div className="flex justify-end gap-3 pt-2">
           <button className="btn-secondary btn" onClick={() => navigate(`/candidates/${candidate.id}`)}>Cancel</button>
           <button className="btn-secondary btn" onClick={() => submit(true)}>Save Draft</button>
           <button className="btn-primary btn" onClick={() => submit(false)}>Submit Feedback</button>
