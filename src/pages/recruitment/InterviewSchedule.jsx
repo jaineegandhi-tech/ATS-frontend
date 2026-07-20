@@ -6,7 +6,7 @@ import { useStorageSync } from '../../utils/useStorageSync';
 import { formatDate } from '../../utils/helpers';
 import StatusBadge from '../../components/shared/StatusBadge';
 import Modal from '../../components/shared/Modal';
-import { Eye, Star, X, Pencil } from 'lucide-react';
+import { Eye, Star, X, Pencil, Plus, Search } from 'lucide-react';
 import { isRecruiter } from '../../utils/roles';
 
 const ROUNDS = ['HR Round', 'Technical Round', 'Managerial Round', 'Final Round'];
@@ -24,6 +24,9 @@ export default function InterviewSchedule() {
   const [editError, setEditError] = useState('');
   const [cancelId, setCancelId] = useState(null);
   const [, forceUpdate] = useState(0);
+  const [scheduleModal, setScheduleModal] = useState(false);
+  const [candidateSearch, setCandidateSearch] = useState('');
+  const [selectedCandidateId, setSelectedCandidateId] = useState('');
 
   const interviews = getStore(STORAGE_KEYS.INTERVIEWS);
   const candidates = getStore(STORAGE_KEYS.CANDIDATES);
@@ -94,7 +97,14 @@ export default function InterviewSchedule() {
 
   return (
     <div className="space-y-5">
-      <h1 className="page-title">Interview Schedule</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="page-title">Interview Schedule</h1>
+        {isHR && (
+          <button className="btn-primary btn" onClick={() => { setScheduleModal(true); setCandidateSearch(''); setSelectedCandidateId(''); }}>
+            <Plus size={16} /> Schedule Interview
+          </button>
+        )}
+      </div>
 
       <div className="card p-4">
         <div className="flex flex-wrap gap-3">
@@ -181,6 +191,55 @@ export default function InterviewSchedule() {
             <div className="flex justify-end gap-3">
               <button className="btn-secondary btn" onClick={() => setEditModal(null)}>Cancel</button>
               <button className="btn-primary btn" onClick={saveEdit}>Save Changes</button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Schedule Interview — Candidate Picker */}
+      {scheduleModal && (
+        <Modal title="Schedule Interview" onClose={() => setScheduleModal(false)} size="sm">
+          <div className="space-y-4">
+            <div className="relative">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                className="input pl-9"
+                placeholder="Search candidate by name or position..."
+                value={candidateSearch}
+                onChange={e => { setCandidateSearch(e.target.value); setSelectedCandidateId(''); }}
+                autoFocus
+              />
+            </div>
+            <div className="max-h-56 overflow-y-auto border border-gray-100 rounded-lg divide-y divide-gray-50">
+              {candidates
+                .filter(c => c.status !== 'archived' && (
+                  !candidateSearch ||
+                  `${c.firstName} ${c.lastName}`.toLowerCase().includes(candidateSearch.toLowerCase()) ||
+                  c.appliedPosition?.toLowerCase().includes(candidateSearch.toLowerCase())
+                ))
+                .map(c => (
+                  <button
+                    key={c.id}
+                    className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors ${
+                      selectedCandidateId === c.id ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
+                    }`}
+                    onClick={() => setSelectedCandidateId(c.id)}
+                  >
+                    <span className="font-medium">{c.firstName} {c.lastName}</span>
+                    <span className="text-xs text-gray-400 ml-2">{c.appliedPosition}</span>
+                  </button>
+                ))
+              }
+            </div>
+            <div className="flex justify-end gap-3">
+              <button className="btn-secondary btn" onClick={() => setScheduleModal(false)}>Cancel</button>
+              <button
+                className="btn-primary btn"
+                disabled={!selectedCandidateId}
+                onClick={() => { setScheduleModal(false); navigate(`/candidates/${selectedCandidateId}/schedule`); }}
+              >
+                Continue
+              </button>
             </div>
           </div>
         </Modal>
