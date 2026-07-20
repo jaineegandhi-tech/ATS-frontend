@@ -59,11 +59,11 @@ export default function Login() {
   const [createForm, setCreateForm] = useState({ password: '', confirm: '' });
   const [createErrors, setCreateErrors] = useState([]);
 
-  function handleLogin(e) {
+  async function handleLogin(e) {
     e.preventDefault();
     if (!form.username) return setError('Username is required.');
     if (!form.password) return setError('Password is required.');
-    const result = login(form.username, form.password);
+    const result = await login(form.username, form.password);
     if (result.error) return setError(result.error);
     navigate('/dashboard');
   }
@@ -208,7 +208,9 @@ export default function Login() {
         <div className="grid grid-cols-2 gap-2">
           {[
             { role: 'Head HR', user: 'headhr', pass: 'password123' },
-            { role: 'HR', user: 'hrdemo', pass: 'password123' },
+            { role: 'HR (Maya)', user: 'hrdemo', pass: 'password123' },
+            { role: 'HR (Priya)', user: 'hr2demo', pass: 'password123' },
+            { role: 'HR (Rahul)', user: 'hr3demo', pass: 'password123' },
             { role: 'Interviewer', user: 'interviewer', pass: 'password123' },
             { role: 'Receptionist', user: 'reception', pass: 'password123' },
             { role: 'IT', user: 'itdemo', pass: 'password123' },

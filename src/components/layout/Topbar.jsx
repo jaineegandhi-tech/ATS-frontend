@@ -23,8 +23,8 @@ export default function Topbar() {
   const latestNotifId = recruitmentNotifs[0]?.id;
   const notifCount = recruitmentNotifs.length;
 
-  function handleLogout() {
-    logout();
+  async function handleLogout() {
+    await logout();
     navigate('/login');
   }
 
@@ -63,7 +63,12 @@ export default function Topbar() {
                           return (
                             <button
                               key={n.id}
-                              onClick={() => { markRecruitmentNotificationRead(n.id); setShowNotifs(false); navigate('/dashboard'); }}
+                              onClick={() => {
+                                markRecruitmentNotificationRead(n.id);
+                                setShowNotifs(false);
+                                if (n.type === 'candidate_reassigned' && n.relatedId) navigate(`/candidates/${n.relatedId}`);
+                                else navigate('/approvals');
+                              }}
                               className={`w-full text-left px-4 py-2.5 transition-colors border-b border-gray-50 last:border-0 ${isNewest ? 'bg-violet-50 border-violet-100' : 'hover:bg-violet-50'}`}
                             >
                               <div className="flex items-center gap-2">
