@@ -233,8 +233,8 @@ const DEMO_CANDIDATES = [
 ];
 
 const DEMO_INTERVIEWS = [
-  { id: 'IV001', candidateId: 'CAND001', date: '2026-07-13', time: '09:00', duration: '60', mode: 'Online', round: 'HR Round', interviewerIds: ['EMP003'], status: 'scheduled', feedback: null, createdAt: new Date().toISOString() },
-  { id: 'IV002', candidateId: 'CAND002', date: '2026-07-13', time: '11:00', duration: '60', mode: 'Offline', round: 'HR Round', interviewerIds: ['EMP003'], status: 'scheduled', feedback: null, createdAt: new Date().toISOString() },
+  { id: 'IV001', candidateId: 'CAND001', date: '2026-07-20', time: '10:00', duration: '60', mode: 'Online', meetingLink: 'https://meet.google.com/abc-defg-hij', round: 'HR Round', interviewerIds: ['EMP003'], status: 'scheduled', feedback: null, createdAt: new Date().toISOString() },
+  { id: 'IV002', candidateId: 'CAND002', date: '2026-07-20', time: '02:00', duration: '60', mode: 'Offline', location: 'Conference Room A', round: 'Technical Round', interviewerIds: ['EMP003'], status: 'scheduled', feedback: null, createdAt: new Date().toISOString() },
   { id: 'IV003', candidateId: 'CAND003', date: '2026-07-13', time: '14:00', duration: '60', mode: 'Online', round: 'HR Round', interviewerIds: ['EMP003'], status: 'scheduled', feedback: null, createdAt: new Date().toISOString() },
   { id: 'IV004', candidateId: 'CAND004', date: '2026-07-13', time: '16:00', duration: '60', mode: 'Offline', round: 'HR Round', interviewerIds: ['EMP003'], status: 'scheduled', feedback: null, createdAt: new Date().toISOString() },
   { id: 'IV005', candidateId: 'CAND005', date: '2026-07-14', time: '09:00', duration: '60', mode: 'Online', round: 'HR Round', interviewerIds: ['EMP003'], status: 'scheduled', feedback: null, createdAt: new Date().toISOString() },
