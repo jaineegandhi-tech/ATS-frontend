@@ -7,7 +7,7 @@ import { formatDate } from '../../utils/helpers';
 import StatusBadge from '../../components/shared/StatusBadge';
 import Modal from '../../components/shared/Modal';
 import ResumeExtractorModal from '../../components/shared/ResumeExtractorModal';
-import { Download, CalendarDays, Pencil, Star, Send, CheckCircle, FileText, Copy, Phone, UserCheck } from 'lucide-react';
+import { Download, CalendarDays, Pencil, Star, Send, CheckCircle, FileText, Copy, Phone, UserCheck, ChevronDown } from 'lucide-react';
 import { ROLES, isRecruiter, isHeadHR } from '../../utils/roles';
 
 export default function CandidateProfile() {
@@ -28,6 +28,7 @@ export default function CandidateProfile() {
   const [copied, setCopied] = useState(false);
   const [reassignModal, setReassignModal] = useState(false);
   const [reassignTo, setReassignTo] = useState('');
+  const [actionsOpen, setActionsOpen] = useState(false);
   const [, forceUpdate] = useState(0);
 
   const candidate = getStore(STORAGE_KEYS.CANDIDATES).find(c => c.id === id);
@@ -232,7 +233,7 @@ Immediate Joining\t${candidate.immediateJoining ? 'Yes' : 'No'}`;
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-5">
+    <div className="space-y-5">
       <div className="flex items-center gap-3">
         <button className="text-gray-400 hover:text-gray-600 text-sm" onClick={() => navigate('/candidates')}>← Back to Candidates</button>
       </div>
@@ -265,21 +266,41 @@ Immediate Joining\t${candidate.immediateJoining ? 'Yes' : 'No'}`;
           {candidate.resume && (
             <button className="btn-secondary btn btn-sm" onClick={downloadResume}><Download size={13} /> Resume</button>
           )}
-              {isHR && (
-              <>
-                <button className="btn-secondary btn btn-sm" onClick={() => navigate(`/candidates/${id}/edit`)}><Pencil size={13} /> Edit</button>
-                <button className="btn-secondary btn btn-sm" onClick={() => navigate(`/candidates/${id}/schedule`)}><CalendarDays size={13} /> {hasScheduledInterview ? 'Reschedule' : 'Schedule'}</button>
-                {['Selected', 'Offered'].includes(candidate.status) && (
-                  <button className="btn-success btn btn-sm" onClick={() => setJoiningModal(true)}><Send size={13} /> Joining Details</button>
-                )}
-                <button className="btn-primary btn btn-sm" onClick={() => { setNewStatus(candidate.status); setStatusModal(true); }}>Update Status</button>
-              </>
-              )}
-              {isHeadHR(user) && (
-                <button className="btn-secondary btn btn-sm" onClick={() => { setReassignTo(candidate.assignedTo || ''); setReassignModal(true); }}><UserCheck size={13} /> Reassign HR</button>
-              )}
           {user?.role === ROLES.IT && candidate.joiningDetails && (
             <button className="btn-primary btn btn-sm" onClick={() => setItModal(true)}><CheckCircle size={13} /> Complete IT Setup</button>
+          )}
+          {isHR && (
+            <div className="relative">
+              <button
+                className="btn btn-primary btn-sm flex items-center gap-1"
+                onClick={() => setActionsOpen(o => !o)}
+              >
+                Actions <ChevronDown size={13} />
+              </button>
+              {actionsOpen && (
+                <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-gray-200 rounded-xl shadow-lg z-50 py-1" onMouseLeave={() => setActionsOpen(false)}>
+                  <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2" onClick={() => { setActionsOpen(false); navigate(`/candidates/${id}/edit`); }}>
+                    <Pencil size={13} /> Edit Candidate
+                  </button>
+                  <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2" onClick={() => { setActionsOpen(false); navigate(`/candidates/${id}/schedule`); }}>
+                    <CalendarDays size={13} /> {hasScheduledInterview ? 'Reschedule Interview' : 'Schedule Interview'}
+                  </button>
+                  <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2" onClick={() => { setActionsOpen(false); setNewStatus(candidate.status); setStatusModal(true); }}>
+                    <CheckCircle size={13} /> Update Status
+                  </button>
+                  {['Selected', 'Offered'].includes(candidate.status) && (
+                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2" onClick={() => { setActionsOpen(false); setJoiningModal(true); }}>
+                      <Send size={13} /> Joining Details
+                    </button>
+                  )}
+                  {isHeadHR(user) && (
+                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2" onClick={() => { setActionsOpen(false); setReassignTo(candidate.assignedTo || ''); setReassignModal(true); }}>
+                      <UserCheck size={13} /> Reassign HR
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -403,39 +424,32 @@ Immediate Joining\t${candidate.immediateJoining ? 'Yes' : 'No'}`;
               <span className="text-sm font-medium text-gray-800">{v || '—'}</span>
             </div>
           ))}
+          {/* Recruitment Info merged here for Head HR */}
+          {isHeadHR(user) && candidate.createdBy && (() => {
+            const creator = employees.find(e => e.id === candidate.createdBy);
+            return (
+              <>
+                <div className="border-t border-gray-100 pt-2 mt-1">
+                  <p className="text-xs font-semibold text-gray-400 mb-2">Recruitment Info</p>
+                </div>
+                <div className="flex justify-between border-b border-gray-50 pb-2">
+                  <span className="text-xs text-gray-400">Created By</span>
+                  <span className="text-sm font-medium text-gray-800">{creator ? `${creator.firstName} ${creator.lastName}` : candidate.createdBy}</span>
+                </div>
+                <div className="flex justify-between border-b border-gray-50 pb-2">
+                  <span className="text-xs text-gray-400">HR Role</span>
+                  <span className="text-sm font-medium text-gray-800">{creator?.designation || 'HR'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-xs text-gray-400">Created On</span>
+                  <span className="text-sm font-medium text-gray-800">{candidate.createdAt ? new Date(candidate.createdAt).toLocaleDateString() : '—'}</span>
+                </div>
+              </>
+            );
+          })()}
         </div>
 
-        {/* Created By Info (Visible to Head HR) */}
-        {isHeadHR(user) && (
-          <div className="card space-y-3">
-            <h2 className="section-title">Recruitment Information</h2>
-            {candidate.createdBy && (() => {
-              const creator = employees.find(e => e.id === candidate.createdBy);
-              return (
-                <>
-                  <div className="flex justify-between border-b border-gray-50 pb-2">
-                    <span className="text-xs text-gray-400">Created By</span>
-                    <span className="text-sm font-medium text-gray-800">{creator ? `${creator.firstName} ${creator.lastName}` : candidate.createdBy}</span>
-                  </div>
-                  <div className="flex justify-between border-b border-gray-50 pb-2">
-                    <span className="text-xs text-gray-400">HR Role</span>
-                    <span className="text-sm font-medium text-gray-800">{creator?.designation || 'HR'}</span>
-                  </div>
-                  <div className="flex justify-between border-b border-gray-50 pb-2">
-                    <span className="text-xs text-gray-400">Created On</span>
-                    <span className="text-sm font-medium text-gray-800">{candidate.createdAt ? new Date(candidate.createdAt).toLocaleDateString() : '—'}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-xs text-gray-400">Time</span>
-                    <span className="text-sm font-medium text-gray-800">{candidate.createdAt ? new Date(candidate.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}</span>
-                  </div>
-                </>
-              );
-            })()}
-          </div>
-        )}
-
-        {/* Interview History */}
+        {/* Interview History — spans remaining 2 cols */}
         <div className="card lg:col-span-2">
           <h2 className="section-title">Interview History</h2>
           {interviews.length === 0 ? (
