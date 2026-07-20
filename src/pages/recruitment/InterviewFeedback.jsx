@@ -75,17 +75,15 @@ export default function InterviewFeedback() {
     } : i));
 
     if (!isDraft) {
-      // Update candidate status
+      // Interviewer feedback only marks the interview as completed.
+      // Passed / Failed / any final status is set exclusively by HR.
       const allC = getStore(STORAGE_KEYS.CANDIDATES);
-      let newStatus = candidate.status;
-      let newRound = candidate.currentRound;
-      if (form.decision === 'Passed') newStatus = 'Passed';
-      else if (form.decision === 'Failed') newStatus = 'Failed';
-      else if (form.decision === 'Hold') newStatus = 'On Hold';
-      else if (form.decision === 'Move to Next Round') { newStatus = 'Next Round Scheduled'; newRound = form.nextRound; }
-
-      const timeline = [...(candidate.timeline || []), { action: `${interview.round} Feedback Submitted — ${form.decision}`, by: user.id, at: now }];
-      setStore(STORAGE_KEYS.CANDIDATES, allC.map(c => c.id === candidate.id ? { ...c, status: newStatus, currentRound: newRound, timeline } : c));
+      const timeline = [...(candidate.timeline || []), { action: `${interview.round} completed — Interviewer remark: ${form.decision}`, by: user.id, at: now }];
+      setStore(STORAGE_KEYS.CANDIDATES, allC.map(c => c.id === candidate.id ? {
+        ...c,
+        status: 'Interview Completed',
+        timeline,
+      } : c));
 
       // Schedule next round interview if needed
       if (form.decision === 'Move to Next Round' && form.nextDate && form.nextRound) {
@@ -101,20 +99,13 @@ export default function InterviewFeedback() {
       // Notify HR
       const hrUsers = getStore(STORAGE_KEYS.EMPLOYEES).filter(e => [ROLES.HEAD_HR, ROLES.HR].includes(e.role));
       hrUsers.forEach(hr => {
-        const msg = form.decision === 'Move to Next Round'
-          ? `${candidate.firstName} ${candidate.lastName} promoted to next interview round.`
-          : form.decision === 'Passed'
-          ? `${candidate.firstName} ${candidate.lastName} marked as Passed.`
-          : form.decision === 'Failed'
-          ? `${candidate.firstName} ${candidate.lastName} marked as Failed.`
-          : `Interview feedback submitted for ${candidate.firstName} ${candidate.lastName}.`;
-        addRecruitmentNotification(hr.id, msg, 'feedback_submitted', ivId);
+        addRecruitmentNotification(hr.id, `${candidate.firstName} ${candidate.lastName} — ${interview.round} completed. Interviewer remark: ${form.decision}. Awaiting your decision.`, 'feedback_submitted', ivId);
       });
 
       getStore(STORAGE_KEYS.EMPLOYEES)
         .filter(e => e.role === ROLES.RECEPTIONIST)
         .forEach(r => {
-          addRecruitmentNotification(r.id, `${candidate.firstName} ${candidate.lastName} interview is complete and ready for approval review.`, 'approval_pending', ivId);
+          addRecruitmentNotification(r.id, `${candidate.firstName} ${candidate.lastName} interview is complete. Awaiting HR decision.`, 'approval_pending', ivId);
         });
 
       addLog('Feedback Submitted', user.id, `Feedback for ${candidate.firstName} ${candidate.lastName} - ${form.decision}`);
@@ -166,7 +157,8 @@ export default function InterviewFeedback() {
         </div>
 
         <div>
-          <label className="label">Final Decision</label>
+          <label className="label">Interview Remark</label>
+          <p className="text-xs text-gray-400 mb-2">This is your assessment remark only. Final decision on the candidate is taken by HR.</p>
           <select className="input" value={form.decision} onChange={e => set('decision', e.target.value)}>
             {DECISIONS.map(d => <option key={d}>{d}</option>)}
           </select>

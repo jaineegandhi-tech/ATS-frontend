@@ -43,13 +43,16 @@ export default function Approvals() {
   function names(ids = []) { return ids.map(empName).join(', ') || '—'; }
 
   // ── SCHEDULED tab ──────────────────────────────────────────────
-  const scheduled = interviews
-    .filter(iv => iv.status === 'scheduled')
-    .sort((a, b) => a.date?.localeCompare(b.date) || a.time?.localeCompare(b.time));
-
   const today = new Date().toISOString().slice(0, 10);
-  const todayInterviews = scheduled.filter(iv => iv.date === today);
-  const upcomingInterviews = scheduled.filter(iv => iv.date > today);
+
+  // Today = ALL interviews for today regardless of status (scheduled or completed)
+  const todayInterviews = interviews
+    .filter(iv => iv.date === today)
+    .sort((a, b) => a.time?.localeCompare(b.time));
+
+  const upcomingInterviews = interviews
+    .filter(iv => iv.status === 'scheduled' && iv.date > today)
+    .sort((a, b) => a.date?.localeCompare(b.date) || a.time?.localeCompare(b.time));
 
   // ── COMPLETED tab ───────────────────────────────────────────────
   const completed = interviews
@@ -142,25 +145,62 @@ export default function Approvals() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {todayInterviews.map(iv => {
                   const cand = candOf(iv);
+                  const isCompleted = iv.status === 'completed';
+                  const fb = iv.feedback && !iv.feedback.isDraft ? iv.feedback : null;
                   return (
-                    <div key={iv.id} className="card border-l-4 border-l-violet-400 space-y-2">
+                    <div key={iv.id} className={`card space-y-2 border-l-4 ${isCompleted ? 'border-l-green-400' : 'border-l-violet-400'}`}>
                       <div className="flex items-start justify-between">
                         <div>
                           <p className="font-semibold text-gray-900">{cand?.firstName} {cand?.lastName}</p>
                           <p className="text-xs text-gray-400">{cand?.appliedPosition} · {cand?.department}</p>
                         </div>
-                        <span className="text-xs font-bold text-violet-600 bg-violet-50 px-2 py-1 rounded-lg">{iv.time}</span>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className="text-xs font-bold text-violet-600 bg-violet-50 px-2 py-1 rounded-lg">{iv.time}</span>
+                          {isCompleted
+                            ? <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded-lg">Done</span>
+                            : <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded-lg">Ongoing</span>
+                          }
+                        </div>
                       </div>
+
                       <div className="flex flex-wrap gap-2 text-xs text-gray-500">
                         <span className="bg-gray-100 px-2 py-0.5 rounded">{iv.round}</span>
                         <span className="bg-gray-100 px-2 py-0.5 rounded">{iv.mode}</span>
                         {iv.mode === 'Offline' && iv.location && <span className="bg-gray-100 px-2 py-0.5 rounded">📍 {iv.location}</span>}
                         {iv.mode === 'Online' && iv.meetingLink && <a href={iv.meetingLink} target="_blank" rel="noreferrer" className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded">🔗 Join</a>}
                       </div>
+
                       <p className="text-xs text-gray-500">Interviewer(s): <strong>{names(iv.interviewerIds)}</strong></p>
+
+                      {/* Feedback inline once completed */}
+                      {fb && (
+                        <div className="bg-gray-50 rounded-lg p-3 space-y-2 border border-gray-100">
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs font-semibold text-gray-600">Interviewer Feedback</p>
+                            <span className={`text-xs font-semibold px-2 py-0.5 rounded border ${decisionColor(fb.decision)}`}>{fb.decision}</span>
+                          </div>
+                          <div className="grid grid-cols-3 gap-1">
+                            {[['Tech', fb.technicalSkills], ['Comm', fb.communicationSkills], ['PS', fb.problemSolving]].map(([l, v]) => (
+                              <div key={l} className="text-center">
+                                <p className="text-[10px] text-gray-400">{l}</p>
+                                <p className="text-xs font-bold text-gray-700">{v}/5</p>
+                              </div>
+                            ))}
+                          </div>
+                          {fb.remarks && <p className="text-xs text-gray-500 italic">"{fb.remarks}"</p>}
+                          {iv.hrAction
+                            ? <p className="text-xs text-green-600 font-semibold">HR Decision: {iv.hrAction}</p>
+                            : <p className="text-xs text-amber-600">⏳ Awaiting HR decision</p>
+                          }
+                        </div>
+                      )}
+
                       <div className="flex items-center justify-between pt-1">
-                        <StatusBadge status={iv.status} />
-                        <button className="btn btn-sm btn-secondary" onClick={() => navigate(`/candidates/${iv.candidateId}`)}><Eye size={12} /> View</button>
+                        <StatusBadge status={cand?.status} />
+                        <div className="flex gap-1">
+                          {fb && <button className="btn btn-sm btn-secondary" onClick={() => { setSelected(iv); setRemarks(''); }}><Eye size={12} /> Details</button>}
+                          <button className="btn btn-sm btn-secondary" onClick={() => navigate(`/candidates/${iv.candidateId}`)}><Eye size={12} /> Profile</button>
+                        </div>
                       </div>
                     </div>
                   );

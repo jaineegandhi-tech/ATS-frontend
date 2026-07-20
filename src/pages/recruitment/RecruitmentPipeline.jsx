@@ -7,12 +7,12 @@ import { CheckCircle, Eye } from 'lucide-react';
 import { ROLES } from '../../utils/roles';
 
 const PIPELINE_STAGES = [
-  { key: 'new', label: 'New', statuses: ['New Candidate'] },
-  { key: 'scheduled', label: 'Scheduled', statuses: ['Interview Scheduled', 'Next Round Scheduled'] },
-  { key: 'in-progress', label: 'In Progress', statuses: ['Interview Completed', 'On Hold'] },
-  { key: 'passed', label: 'Passed', statuses: ['Passed'] },
-  { key: 'offer', label: 'Offer Stage', statuses: ['Selected', 'Offered', 'Offer Sent', 'Offer Accepted', 'Offer Declined'] },
-  { key: 'final', label: 'Final', statuses: ['Joined', 'Rejected', 'Failed'] },
+  { key: 'new',         label: 'New',          statuses: ['New Candidate'] },
+  { key: 'scheduled',  label: 'Scheduled',     statuses: ['Interview Scheduled', 'Next Round Scheduled'] },
+  { key: 'in-progress',label: 'In Progress',   statuses: ['Interview Completed', 'On Hold', 'Screening', 'Interview In Progress'] },
+  { key: 'passed',     label: 'Passed',        statuses: ['Passed'] },
+  { key: 'offer',      label: 'Offer Stage',   statuses: ['Selected', 'Offered', 'Offer Sent', 'Offer Accepted', 'Offer Declined'] },
+  { key: 'final',      label: 'Final',         statuses: ['Joined', 'Rejected', 'Failed', 'Not Joined'] },
 ];
 
 export default function RecruitmentPipeline() {
@@ -25,9 +25,9 @@ export default function RecruitmentPipeline() {
   const interviews = getStore(STORAGE_KEYS.INTERVIEWS);
   const allCandidates = getStore(STORAGE_KEYS.CANDIDATES).filter(c => c.status !== 'archived');
   const candidates = allCandidates.filter(c => {
-    if (user?.role === ROLES.HR) return !c.createdBy || c.createdBy === user.id;
+    if (user?.role === ROLES.HR) return !c.assignedTo || c.assignedTo === user.id || c.createdBy === user.id;
     if (user?.role === ROLES.INTERVIEWER) return interviews.some(i => i.candidateId === c.id && i.interviewerIds?.includes(user.id));
-    if (user?.role === ROLES.RECEPTIONIST) return interviews.some(i => i.candidateId === c.id && i.approvalStatus === 'Pending Receptionist Review');
+    if (user?.role === ROLES.RECEPTIONIST) return interviews.some(i => i.candidateId === c.id);
     if (user?.role === ROLES.IT) return ['Offered', 'Offer Sent', 'Offer Accepted', 'Joined'].includes(c.status);
     return true;
   });
@@ -59,6 +59,10 @@ export default function RecruitmentPipeline() {
                         <p className="text-xs text-gray-400 truncate">{c.appliedPosition}</p>
                         {c.joiningDetails?.joiningDate && <p className="text-xs text-emerald-600 mt-0.5">Joining: {c.joiningDetails.joiningDate}</p>}
                         {c.currentRound && <p className="text-xs text-primary mt-0.5">{c.currentRound}</p>}
+                        {c.status === 'Interview Completed' && (() => {
+                          const latestIv = interviews.filter(i => i.candidateId === c.id && i.status === 'completed' && i.feedback && !i.feedback.isDraft).sort((a,b) => (b.feedback?.submittedAt||'').localeCompare(a.feedback?.submittedAt||''))[0];
+                          return latestIv ? <p className="text-xs text-amber-600 mt-0.5">Remark: {latestIv.feedback.decision} · Awaiting HR</p> : null;
+                        })()}
                       </div>
                       <button className="btn btn-xs btn-secondary flex-shrink-0" onClick={() => navigate(`/candidates/${c.id}`)}><Eye size={11} /></button>
                     </div>
