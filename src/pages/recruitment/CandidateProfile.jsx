@@ -210,7 +210,7 @@ Immediate Joining\t${candidate.immediateJoining ? 'Yes' : 'No'}`;
 
   const STATUSES = ['New Candidate', 'Screening', 'Interview Scheduled', 'Interview In Progress', 'Interview Completed', 'Passed', 'Failed', 'On Hold', 'Rejected', 'Next Round Scheduled', 'Selected', 'Offered', 'Joined', 'Not Joined'];
   const managerOptions = employees.filter(e => e.status !== 'inactive' && e.role !== ROLES.IT);
-  const hrList = employees.filter(e => e.role === ROLES.HR && e.status !== 'inactive');
+  const hrList = employees.filter(e => [ROLES.HR, ROLES.HEAD_HR].includes(e.role) && e.status !== 'inactive' && e.id !== user.id);
 
   function reassignCandidate() {
     if (!reassignTo) return;
@@ -293,7 +293,7 @@ Immediate Joining\t${candidate.immediateJoining ? 'Yes' : 'No'}`;
                       <Send size={13} /> Joining Details
                     </button>
                   )}
-                  {isHeadHR(user) && (
+                  {isHR && (
                     <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2" onClick={() => { setActionsOpen(false); setReassignTo(candidate.assignedTo || ''); setReassignModal(true); }}>
                       <UserCheck size={13} /> Reassign HR
                     </button>

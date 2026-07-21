@@ -218,11 +218,10 @@ export default function Login() {
             <button
               key={c.role}
               type="button"
-              onClick={async () => {
-                const result = await login(c.user, c.pass);
-                if (!result.error) navigate('/dashboard');
-              }}
-              className="bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 rounded-xl p-3 text-left transition-colors group"
+              onClick={() => { setForm({ username: c.user, password: c.pass }); setError(''); }}
+              className={`bg-slate-900 hover:bg-slate-800 border rounded-xl p-3 text-left transition-colors group ${
+                form.username === c.user ? 'border-primary' : 'border-slate-800 hover:border-slate-700'
+              }`}
             >
               <p className="text-xs font-semibold text-slate-400 group-hover:text-slate-300">{c.role}</p>
               <p className="text-[11px] text-slate-600 mt-0.5">{c.user}</p>

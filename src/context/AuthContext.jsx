@@ -12,23 +12,25 @@ export function AuthProvider({ children }) {
   });
 
   async function login(username, password) {
-    // Try backend first
+    // Try backend with a short timeout, fall back to localStorage immediately
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 1500);
       const res = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
       const data = await res.json();
-
       if (!res.ok) return { error: data.error || 'Login failed.' };
-
       saveTokens(data.accessToken, data.refreshToken);
       localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(data.user));
       setUser(data.user);
       return { success: true };
     } catch {
-      // Backend unreachable — fall back to localStorage
+      // Backend unreachable or timed out — fall back to localStorage
       const { getStore, addLog } = await import('../utils/store');
       const employees = getStore(STORAGE_KEYS.EMPLOYEES);
       const emp = employees.find(e => e.username === username && e.password === password);

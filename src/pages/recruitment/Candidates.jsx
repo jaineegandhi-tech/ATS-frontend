@@ -36,7 +36,7 @@ export default function Candidates() {
       return interviews.some(i => i.candidateId === c.id && i.interviewerIds?.includes(user.id));
     }
     if (user?.role === ROLES.IT) {
-      return ['Offered', 'Offer Sent', 'Offer Accepted', 'Joined'].includes(c.status);
+      return ['Selected', 'Offered', 'Offer Sent', 'Offer Accepted', 'Joined', 'Rejected', 'Failed', 'Not Joined'].includes(c.status);
     }
     if (user?.role === ROLES.HR) {
       if (myView) return c.assignedTo === user.id || c.createdBy === user.id;

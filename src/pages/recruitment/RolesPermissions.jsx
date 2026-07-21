@@ -215,7 +215,7 @@ export default function RolesPermissions() {
           <h2 className="section-title mb-0 flex items-center gap-2"><Shield size={15} className="text-primary" /> Permission Matrix</h2>
           {headHR && (
             <button className="btn btn-primary btn-sm" onClick={() => { setShowNewRole(v => !v); setShowAddUser(false); }}>
-              <Plus size={13} /> {showNewRole ? 'Cancel' : 'Create New Role'}
+              {showNewRole ? 'Cancel' : <><Plus size={13} /> Create New Role</>}
             </button>
           )}
         </div>
@@ -233,7 +233,7 @@ export default function RolesPermissions() {
                   <Check size={13} /> Create Role
                 </button>
                 <button className="btn btn-secondary btn-sm" onClick={() => { setShowNewRole(false); setNewRoleLabel(''); setNewRolePerms(emptyPerms()); }}>
-                  <X size={13} /> Cancel
+                  Cancel
                 </button>
               </div>
             </div>
