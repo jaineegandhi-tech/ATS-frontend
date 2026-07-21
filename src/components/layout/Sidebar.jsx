@@ -32,7 +32,7 @@ const MODULES = [
 
 export default function Sidebar() {
   const { user } = useAuth();
-  const links = MODULES.filter(module => canAccess(user?.role, module.key));
+  const links = MODULES.filter(module => canAccess(user?.role, module.key, user?.id));
 
   return (
     <aside className="w-[240px] bg-sidebar flex flex-col flex-shrink-0 min-h-screen">

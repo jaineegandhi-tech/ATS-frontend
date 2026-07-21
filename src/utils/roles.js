@@ -14,24 +14,56 @@ export const ROLE_LABELS = {
   [ROLES.IT]: 'IT',
 };
 
-export const MODULE_ACCESS = {
-  dashboard: Object.values(ROLES),
-  jobOpenings: [ROLES.HEAD_HR, ROLES.HR],
-  candidates: [ROLES.HEAD_HR, ROLES.HR, ROLES.INTERVIEWER, ROLES.IT],
-  interviewCalendar: [ROLES.HEAD_HR, ROLES.HR, ROLES.INTERVIEWER],
-  interviewSchedule: [ROLES.HEAD_HR, ROLES.HR, ROLES.INTERVIEWER],
-  approvals: Object.values(ROLES),
-  reports: [ROLES.HEAD_HR, ROLES.HR],
-  pipeline: Object.values(ROLES),
-  rolesPermissions: [ROLES.HEAD_HR],
-  // ResumeInfo accessible to HR roles
-  resumeInfo: [ROLES.HEAD_HR, ROLES.HR],
-  // Telephonic Interview log
-  telephonyInterview: [ROLES.HEAD_HR, ROLES.HR],
-};
+export const ALL_MODULES = [
+  { key: 'dashboard',          label: 'Dashboard' },
+  { key: 'jobOpenings',        label: 'Job Openings' },
+  { key: 'candidates',         label: 'Candidates' },
+  { key: 'interviewCalendar',  label: 'Interview Calendar' },
+  { key: 'interviewSchedule',  label: 'Interview Schedule' },
+  { key: 'approvals',          label: 'Interview Activity' },
+  { key: 'reports',            label: 'Reports' },
+  { key: 'pipeline',           label: 'Pipeline' },
+  { key: 'rolesPermissions',   label: 'Roles & Permissions' },
+  { key: 'resumeInfo',         label: 'Resume Info' },
+  { key: 'telephonyInterview', label: 'Telephonic Interviews' },
+];
 
-export function canAccess(role, module) {
-  return MODULE_ACCESS[module]?.includes(role);
+export const PERMISSION_KEYS = ['view', 'add', 'edit', 'delete'];
+
+function getCustomRoles() {
+  try { return JSON.parse(localStorage.getItem('hrms_custom_roles')) || []; } catch { return []; }
+}
+
+// Returns true if the role has at least "view" access to the module
+export function canAccess(role, module, userId = null) {
+  if (!role) return false;
+
+  // Check per-user override first
+  if (userId) {
+    try {
+      const employees = JSON.parse(localStorage.getItem('hrms_employees')) || [];
+      const emp = employees.find(e => e.id === userId);
+      if (emp?.permissionOverrides) {
+        return !!emp.permissionOverrides[module]?.view;
+      }
+    } catch { /* fall through */ }
+  }
+
+  const customRoles = getCustomRoles();
+  const roleConfig = customRoles.find(r => r.id === role);
+  if (roleConfig) {
+    if (roleConfig.permissions) return !!roleConfig.permissions[module]?.view;
+    if (roleConfig.modules) return roleConfig.modules.includes(module);
+  }
+  return false;
+}
+
+export function hasPermission(role, module, action) {
+  if (!role) return false;
+  const customRoles = getCustomRoles();
+  const roleConfig = customRoles.find(r => r.id === role);
+  if (roleConfig?.permissions) return !!roleConfig.permissions[module]?.[action];
+  return false;
 }
 
 export function isHeadHR(user) {

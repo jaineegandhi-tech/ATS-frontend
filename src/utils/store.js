@@ -23,6 +23,7 @@ export const STORAGE_KEYS = {
   JOB_OPENINGS: 'hrms_job_openings',
   ASSETS: 'hrms_assets',
   TELEPHONY_INTERVIEWS: 'hrms_telephony_interviews',
+  CUSTOM_ROLES: 'hrms_custom_roles',
 };
 
 const DEMO_EMPLOYEES = [
@@ -443,6 +444,20 @@ export function initStore() {
   }
   if (!localStorage.getItem(STORAGE_KEYS.TELEPHONY_INTERVIEWS)) {
     localStorage.setItem(STORAGE_KEYS.TELEPHONY_INTERVIEWS, JSON.stringify([]));
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.CUSTOM_ROLES)) {
+    const defaultPerms = (mods) => {
+      const p = {};
+      mods.forEach(m => { p[m] = { view: true, add: false, edit: false, delete: false }; });
+      return p;
+    };
+    localStorage.setItem(STORAGE_KEYS.CUSTOM_ROLES, JSON.stringify([
+      { id: 'head_hr',     label: 'Head HR',     isSystem: true,  permissions: (() => { const p = {}; ['dashboard','jobOpenings','candidates','interviewCalendar','interviewSchedule','approvals','reports','pipeline','rolesPermissions','resumeInfo','telephonyInterview'].forEach(m => { p[m] = { view: true, add: true, edit: true, delete: true }; }); return p; })() },
+      { id: 'hr',         label: 'HR',          isSystem: true,  permissions: (() => { const p = {}; ['dashboard','jobOpenings','candidates','interviewCalendar','interviewSchedule','approvals','reports','pipeline','resumeInfo','telephonyInterview'].forEach(m => { p[m] = { view: true, add: true, edit: true, delete: false }; }); return p; })() },
+      { id: 'interviewer',label: 'Interviewer', isSystem: true,  permissions: defaultPerms(['dashboard','candidates','interviewCalendar','interviewSchedule','approvals','pipeline']) },
+      { id: 'receptionist',label:'Receptionist',isSystem: true,  permissions: defaultPerms(['dashboard','approvals','pipeline']) },
+      { id: 'it',         label: 'IT',          isSystem: true,  permissions: defaultPerms(['dashboard','candidates','pipeline']) },
+    ]));
   }
 }
 
