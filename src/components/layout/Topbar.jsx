@@ -30,7 +30,7 @@ export default function Topbar() {
 
   return (
     <>
-      <header className="h-14 bg-white border-b border-gray-100 flex items-center justify-between px-6 flex-shrink-0">
+      <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6 flex-shrink-0 sticky top-0 z-20">
         <div />
         <div className="flex items-center gap-2">
           <div className="relative">
@@ -104,14 +104,12 @@ export default function Topbar() {
           <div className="relative">
             <button
               onClick={() => setShowMenu(v => !v)}
-              className="flex items-center gap-2.5 hover:bg-gray-50 rounded-lg px-2.5 py-1.5 transition-colors"
+              className="flex items-center gap-2 hover:bg-gray-50 rounded-lg px-2 py-1.5 transition-colors"
             >
-              <Avatar employee={user} size="sm" />
-              <div className="text-left hidden sm:block">
-                <p className="text-sm font-semibold text-gray-800 leading-tight">{user?.firstName} {user?.lastName}</p>
-                <p className="text-[11px] text-gray-400 leading-tight">{ROLE_LABELS[user?.role] || user?.role}</p>
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                {user?.firstName?.[0]}{user?.lastName?.[0]}
               </div>
-              <ChevronDown size={13} className="text-gray-400 ml-0.5" />
+              <ChevronDown size={13} className="text-gray-400" />
             </button>
 
             {showMenu && (

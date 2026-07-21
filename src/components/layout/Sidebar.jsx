@@ -42,7 +42,7 @@ export default function Sidebar() {
         </div>
         <div>
           <p className="text-white font-bold text-sm tracking-tight leading-none">ATS</p>
-          <p className="text-slate-500 text-[10px] mt-0.5 leading-none">Applicant Tracking System</p>
+          <p className="text-sidebar-text text-[10px] mt-0.5 leading-none">Applicant Tracking</p>
         </div>
       </div>
 
@@ -59,14 +59,6 @@ export default function Sidebar() {
           </NavLink>
         ))}
       </nav>
-
-      <div className="px-4 py-3 border-t border-sidebar-border">
-        <p className="text-slate-500 text-[11px]">{ROLE_LABELS[user?.role] || 'ATS User'}</p>
-        <div className="flex items-center gap-2 mt-1">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-          <p className="text-slate-500 text-[11px]">v1.0 · ATS MVP</p>
-        </div>
-      </div>
     </aside>
   );
 }
