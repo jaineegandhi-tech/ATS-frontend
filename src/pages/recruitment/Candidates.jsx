@@ -1,11 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getStore, setStore, STORAGE_KEYS, addLog, syncCandidateStatuses } from '../../utils/store';
 import { useStorageSync } from '../../utils/useStorageSync';
-import { formatDate } from '../../utils/helpers';
 import StatusBadge from '../../components/shared/StatusBadge';
-import { Plus, Search, Eye, Pencil, CalendarDays, Download, Archive, Users2, UserCheck } from 'lucide-react';
+import { Plus, Search, Eye, Pencil, CalendarDays, Download, Archive, Users2, UserCheck, MoreVertical } from 'lucide-react';
 import { ROLES, isRecruiter, isHeadHR } from '../../utils/roles';
 
 const ROUNDS = ['HR Round', 'Technical Round', 'Managerial Round', 'Final Round'];
@@ -131,64 +130,125 @@ export default function Candidates() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="card p-0 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-100">
-              <tr>{['ID', 'Candidate', 'Applied Position', 'Interview Date', 'Time', 'Interviewer', 'Round', 'Status', ...(isHeadHR(user) || (isOnlyHR && !myView) ? ['HR Owner'] : []), 'Actions'].map(h => <th key={h} className="table-th">{h}</th>)}</tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {filtered.length === 0 ? (
-                <tr><td colSpan={9} className="table-td text-center text-gray-400 py-8">No candidates found.</td></tr>
-              ) : filtered.map(c => {
-                const iv = getLatestInterview(c.id);
-                const hasScheduledInterview = !!iv;
-                const interviewers = iv?.interviewerIds?.map(id => {
-                  const emp = getStore(STORAGE_KEYS.EMPLOYEES).find(e => e.id === id);
-                  return emp ? `${emp.firstName} ${emp.lastName}` : id;
-                }).join(', ') || '—';
-                return (
-                  <tr key={c.id} className="hover:bg-gray-50">
-                    <td className="table-td text-xs text-gray-400">{c.id}</td>
-                    <td className="table-td">
-                      <div>
-                        <p className="font-medium text-gray-900">{c.firstName} {c.lastName}</p>
-                        <p className="text-xs text-gray-400">{c.email}</p>
-                        {isOnlyHR && c.assignedTo === user.id && c.createdBy !== user.id && (
-                          <span className="text-[10px] font-semibold text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded mt-0.5 inline-block">Assigned to you</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="table-td">{c.appliedPosition}</td>
-                    <td className="table-td">{iv?.date ? formatDate(iv.date) : '—'}</td>
-                    <td className="table-td">{iv?.time || '—'}</td>
-                    <td className="table-td text-xs">{interviewers}</td>
-                    <td className="table-td">{c.currentRound || '—'}</td>
-                    <td className="table-td"><StatusBadge status={c.status} /></td>
-                    {(isHeadHR(user) || (isOnlyHR && !myView)) && (
-                      <td className="table-td text-xs">
-                        {(() => {
-                          const ownerId = c.assignedTo || c.createdBy;
-                          const owner = getStore(STORAGE_KEYS.EMPLOYEES).find(e => e.id === ownerId);
-                          return owner ? `${owner.firstName} ${owner.lastName}` : '—';
-                        })()}
-                      </td>
-                    )}
-                    <td className="table-td">
-                      <div className="flex items-center gap-1">
-                        <button className="btn btn-sm btn-secondary" title="View" onClick={() => navigate(`/candidates/${c.id}`)}><Eye size={13} /></button>
-                        {isHR && <button className="btn btn-sm btn-secondary" title="Edit" onClick={() => navigate(`/candidates/${c.id}/edit`)}><Pencil size={13} /></button>}
-                        {isHR && <button className="btn btn-sm btn-secondary" title={hasScheduledInterview ? 'Reschedule Interview' : 'Schedule Interview'} onClick={() => navigate(`/candidates/${c.id}/schedule`)}><CalendarDays size={13} /> {hasScheduledInterview ? 'Reschedule' : 'Schedule'}</button>}
-                        <button className="btn btn-sm btn-secondary" title="Download Resume" onClick={() => downloadResume(c)}><Download size={13} /></button>
-                        {isHR && c.status !== 'archived' && <button className="btn btn-sm btn-secondary" title="Archive" onClick={() => archive(c.id)}><Archive size={13} /></button>}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+      {/* Cards */}
+      {filtered.length === 0 ? (
+        <div className="card text-center py-16 text-gray-400">No candidates found.</div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {filtered.map(c => {
+            const iv = getLatestInterview(c.id);
+            const hasScheduledInterview = !!iv;
+            const ownerId = c.assignedTo || c.createdBy;
+            const owner = getStore(STORAGE_KEYS.EMPLOYEES).find(e => e.id === ownerId);
+            const ownerName = owner ? `${owner.firstName} ${owner.lastName}` : null;
+            const initials = `${c.firstName?.[0] || ''}${c.lastName?.[0] || ''}`;
+            return (
+              <CandidateCard
+                key={c.id}
+                c={c}
+                initials={initials}
+                ownerName={ownerName}
+                hasScheduledInterview={hasScheduledInterview}
+                isHR={isHR}
+                isOnlyHR={isOnlyHR}
+                showOwner={isHeadHR(user) || (isOnlyHR && !myView)}
+                user={user}
+                onView={() => navigate(`/candidates/${c.id}`)}
+                onEdit={() => navigate(`/candidates/${c.id}/edit`)}
+                onSchedule={() => navigate(`/candidates/${c.id}/schedule`)}
+                onDownload={() => downloadResume(c)}
+                onArchive={() => archive(c.id)}
+              />
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CandidateCard({ c, initials, ownerName, hasScheduledInterview, isHR, isOnlyHR, showOwner, user, onView, onEdit, onSchedule, onDownload, onArchive }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    function handler(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-100 shadow-card hover:shadow-card-hover transition-shadow duration-200 flex flex-col">
+      {/* Top: initials + status badge */}
+      <div className="flex flex-col items-center pt-6 pb-3 px-4">
+        <div className="w-12 h-12 rounded-full bg-primary-light flex items-center justify-center text-primary font-bold text-base mb-3">
+          {initials}
+        </div>
+        <p className="text-sm font-semibold text-heading text-center leading-tight">{c.firstName} {c.lastName}</p>
+        <p className="text-xs text-body text-center mt-0.5 truncate w-full">{c.appliedPosition || '—'}</p>
+        <div className="mt-2">
+          <StatusBadge status={c.status} />
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div className="border-t border-gray-100 mx-4" />
+
+      {/* Details */}
+      <div className="px-4 py-3 space-y-1.5 flex-1">
+        {c.department && (
+          <p className="text-xs text-body truncate"><span className="text-gray-400">Dept:</span> {c.department}</p>
+        )}
+        {showOwner && ownerName && (
+          <p className="text-xs text-body truncate"><span className="text-gray-400">HR:</span> {ownerName}</p>
+        )}
+        {!showOwner && ownerName && (
+          <p className="text-xs text-body truncate"><span className="text-gray-400">HR:</span> {ownerName}</p>
+        )}
+        {isOnlyHR && c.assignedTo === user.id && c.createdBy !== user.id && (
+          <span className="text-[10px] font-semibold text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded inline-block">Assigned to you</span>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div className="px-4 pb-4 flex items-center gap-2">
+        <button
+          className="btn btn-primary btn-sm flex-1"
+          onClick={onView}
+        >
+          <Eye size={12} /> View
+        </button>
+
+        {/* Dropdown */}
+        <div className="relative" ref={ref}>
+          <button
+            className="btn btn-secondary btn-sm px-2"
+            onClick={() => setOpen(o => !o)}
+          >
+            <MoreVertical size={13} />
+          </button>
+          {open && (
+            <div className="absolute right-0 bottom-full mb-1 w-48 bg-white border border-gray-100 rounded-xl shadow-modal z-50 py-1">
+              {isHR && (
+                <button className="w-full text-left px-4 py-2 text-sm text-body hover:bg-surface flex items-center gap-2" onClick={() => { setOpen(false); onEdit(); }}>
+                  <Pencil size={13} /> Edit
+                </button>
+              )}
+              {isHR && (
+                <button className="w-full text-left px-4 py-2 text-sm text-body hover:bg-surface flex items-center gap-2" onClick={() => { setOpen(false); onSchedule(); }}>
+                  <CalendarDays size={13} /> {hasScheduledInterview ? 'Reschedule Interview' : 'Schedule Interview'}
+                </button>
+              )}
+              <button className="w-full text-left px-4 py-2 text-sm text-body hover:bg-surface flex items-center gap-2" onClick={() => { setOpen(false); onDownload(); }}>
+                <Download size={13} /> Download Resume
+              </button>
+              {isHR && c.status !== 'archived' && (
+                <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2" onClick={() => { setOpen(false); onArchive(); }}>
+                  <Archive size={13} /> Archive
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

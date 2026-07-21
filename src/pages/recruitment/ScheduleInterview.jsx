@@ -100,6 +100,11 @@ export default function ScheduleInterview() {
     navigate(`/candidates/${id}`);
   }
 
+  const today = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const minTime = form.date === today ? currentTime : undefined;
+
   const err = f => errors[f] ? <p className="text-xs text-red-500 mt-1">{errors[f]}</p> : null;
   const set = (f, v) => setForm(p => ({ ...p, [f]: v }));
 
@@ -113,8 +118,8 @@ export default function ScheduleInterview() {
       <div className="card">
         <p className="text-sm text-gray-600 mb-4">{isRescheduling ? 'Rescheduling interview for' : 'Scheduling interview for'} <strong>{candidate.firstName} {candidate.lastName}</strong> — {candidate.appliedPosition}</p>
         <div className="grid grid-cols-2 gap-4">
-          <div><label className="label">Interview Date *</label><input type="date" className="input" value={form.date} onChange={e => set('date', e.target.value)} />{err('date')}</div>
-          <div><label className="label">Interview Time *</label><input type="time" className="input" value={form.time} onChange={e => set('time', e.target.value)} />{err('time')}</div>
+          <div><label className="label">Interview Date *</label><input type="date" className="input" value={form.date} min={today} onChange={e => set('date', e.target.value)} />{err('date')}</div>
+          <div><label className="label">Interview Time *</label><input type="time" className="input" value={form.time} min={minTime} onChange={e => set('time', e.target.value)} />{err('time')}</div>
           <div><label className="label">Duration (minutes)</label><input type="number" className="input" value={form.duration} onChange={e => set('duration', e.target.value)} min={15} /></div>
           <div>
             <label className="label">Interview Mode</label>

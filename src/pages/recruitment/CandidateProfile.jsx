@@ -249,7 +249,7 @@ Immediate Joining\t${candidate.immediateJoining ? 'Yes' : 'No'}`;
       {/* Header */}
       <div className="card flex items-start justify-between gap-4">
         <div className="flex items-start gap-4">
-          <div className="w-14 h-14 rounded-full bg-violet-100 flex items-center justify-center text-violet-700 font-bold text-lg flex-shrink-0">
+          <div className="w-14 h-14 rounded-full bg-primary-light flex items-center justify-center text-primary font-bold text-lg flex-shrink-0">
             {candidate.firstName?.[0]}{candidate.lastName?.[0]}
           </div>
           <div>
