@@ -247,6 +247,13 @@ const DEMO_INTERVIEWS = [
 ];
 
 export function initStore() {
+  // Force re-seed candidates if data version is outdated
+  const DATA_VERSION = '2';
+  if (localStorage.getItem('hrms_data_version') !== DATA_VERSION) {
+    localStorage.removeItem(STORAGE_KEYS.CANDIDATES);
+    localStorage.removeItem(STORAGE_KEYS.CUSTOM_ROLES);
+    localStorage.setItem('hrms_data_version', DATA_VERSION);
+  }
   if (!localStorage.getItem(STORAGE_KEYS.EMPLOYEES)) {
     localStorage.setItem(STORAGE_KEYS.EMPLOYEES, JSON.stringify(DEMO_EMPLOYEES));
   } else {
