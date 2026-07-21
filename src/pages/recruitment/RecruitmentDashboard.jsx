@@ -88,8 +88,8 @@ export default function RecruitmentDashboard() {
     [Users, role === ROLES.HR ? 'My Candidates' : 'Total Candidates', scopedCandidates.length, 'bg-primary-light', 'text-primary', '/candidates'],
     [CalendarDays, "Today's Interviews", todaysInterviews.length, 'bg-amber-50', 'text-amber-600', '/interview-calendar'],
     [GitBranch, 'In Pipeline', scopedCandidates.filter(c => !['Rejected','Joined','archived'].includes(c.status)).length, 'bg-indigo-50', 'text-indigo-600', '/pipeline'],
-    [CheckCircle, 'Selected', scopedCandidates.filter(c => ['Selected','Offer Sent','Offer Accepted','Joined'].includes(c.status)).length, 'bg-emerald-50', 'text-emerald-600', '/reports'],
-    [XCircle, 'Rejected', scopedCandidates.filter(c => ['Rejected','Failed'].includes(c.status)).length, 'bg-red-50', 'text-red-500', '/reports'],
+    [CheckCircle, 'Selected', scopedCandidates.filter(c => ['Selected','Offer Sent','Offer Accepted','Joined'].includes(c.status)).length, 'bg-emerald-50', 'text-emerald-600', '/candidates?status=Selected'],
+    [XCircle, 'Rejected', scopedCandidates.filter(c => ['Rejected','Failed'].includes(c.status)).length, 'bg-red-50', 'text-red-500', '/candidates?status=Rejected'],
   ];
 
   // Chart data — candidate status breakdown

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getStore, setStore, STORAGE_KEYS, addLog, syncCandidateStatuses } from '../../utils/store';
 import { useStorageSync } from '../../utils/useStorageSync';
@@ -17,11 +17,12 @@ export default function Candidates() {
   
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const isHR = isRecruiter(user);
   const isOnlyHR = user?.role === ROLES.HR;
   const [search, setSearch] = useState('');
   const [filterDept, setFilterDept] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
+  const [filterStatus, setFilterStatus] = useState(() => new URLSearchParams(location.search).get('status') || '');
   const [filterRound, setFilterRound] = useState('');
   const [showArchived, setShowArchived] = useState(false);
   const [myView, setMyView] = useState(true);
