@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import db from '../db.js';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
+router.use(requireAuth);
 
 function parseJSON(val, fallback) {
   try { return val ? JSON.parse(val) : fallback; } catch { return fallback; }

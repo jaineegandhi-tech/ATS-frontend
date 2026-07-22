@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import db from '../db.js';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
+router.use(requireAuth);
 
 function generateId() {
   const rows = db.prepare(`SELECT id FROM job_openings WHERE id LIKE 'JOB%'`).all();
@@ -27,7 +29,7 @@ router.post('/', (req, res) => {
   const d = req.body;
   const id = d.id || generateId();
   const now = new Date().toISOString();
-  db.prepare(`INSERT INTO job_openings (id, positionName, department, openings, filled, status, description, requirements, updatedAt, updatedBy, createdAt)
+  db.prepare(`INSERT OR REPLACE INTO job_openings (id, positionName, department, openings, filled, status, description, requirements, updatedAt, updatedBy, createdAt)
     VALUES (?,?,?,?,?,?,?,?,?,?,?)`)
     .run(id, d.positionName||'', d.department||'', d.openings||1, d.filled||0,
       d.status||'open', d.description||null, d.requirements||null, now, d.updatedBy||null, now);

@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import db from '../db.js';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
+router.use(requireAuth);
 
 function parseJSON(val, fallback) {
   try { return val ? JSON.parse(val) : fallback; } catch { return fallback; }
@@ -43,7 +45,7 @@ router.post('/', (req, res) => {
   const id = data.id || generateId();
   const now = new Date().toISOString();
   db.prepare(`
-    INSERT INTO candidates (id, firstName, lastName, email, mobile, location, appliedPosition,
+    INSERT OR REPLACE INTO candidates (id, firstName, lastName, email, mobile, location, appliedPosition,
     department, employmentType, status, currentRound, resumeFile, resumeText, experience, skills,
     education, linkedIn, portfolio, expectedSalary, noticePeriod, source, notes, timeline, createdAt, createdBy, updatedAt)
     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)

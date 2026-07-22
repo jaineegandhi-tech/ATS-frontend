@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import db from '../db.js';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
+router.use(requireAuth);
 
 function parseJSON(val, fallback) {
   try { return val ? JSON.parse(val) : fallback; } catch { return fallback; }
@@ -60,7 +62,7 @@ router.post('/', (req, res) => {
   const id = data.id || generateId();
   const now = new Date().toISOString();
   db.prepare(`
-    INSERT INTO interviews (id, candidateId, date, time, duration, mode, round, interviewerIds,
+    INSERT OR REPLACE INTO interviews (id, candidateId, date, time, duration, mode, round, interviewerIds,
     status, feedback, meetingLink, location, notes, createdAt, updatedAt)
     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `).run(id, data.candidateId, data.date||'', data.time||'', data.duration||'60',

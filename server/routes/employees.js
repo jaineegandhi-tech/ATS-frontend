@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import db from '../db.js';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
+router.use(requireAuth);
 
 function parseEmployee(emp) {
   if (!emp) return null;
@@ -42,7 +44,7 @@ router.post('/', (req, res) => {
   const id = data.id || generateEmpId();
   const now = new Date().toISOString();
   db.prepare(`
-    INSERT INTO employees (id, username, password, role, status, firstName, lastName, middleName,
+    INSERT OR REPLACE INTO employees (id, username, password, role, status, firstName, lastName, middleName,
     email, department, designation, joiningDate, employmentType, gender, dob, bloodGroup, maritalStatus,
     nationality, mobile, alternateMobile, personalEmail, currentAddress, permanentAddress, city, state,
     country, postalCode, reportingManager, emergencyContact, profilePicture, profileCompleted, createdAt, updatedAt)
@@ -57,6 +59,18 @@ router.post('/', (req, res) => {
     data.reportingManager||'',
     typeof data.emergencyContact === 'object' ? JSON.stringify(data.emergencyContact) : (data.emergencyContact||'{}'),
     data.profilePicture||null, data.profileCompleted ? 1 : 0, now, now);
+
+  // Sync credentials into users table for authentication
+  if (data.username) {
+    db.prepare(`
+      INSERT OR REPLACE INTO users (id, username, password, role, status, firstName, lastName, email, mobile, department, designation, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      id, data.username, data.password || 'password123', data.role || 'employee',
+      data.status || 'active', data.firstName || '', data.lastName || '',
+      data.email || '', data.mobile || '', data.department || '', data.designation || '', now
+    );
+  }
 
   const created = db.prepare('SELECT * FROM employees WHERE id = ?').get(id);
   res.status(201).json(parseEmployee(created));

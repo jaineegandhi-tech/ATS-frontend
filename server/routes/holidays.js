@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import db from '../db.js';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
+router.use(requireAuth);
 
 function generateId() {
   const rows = db.prepare(`SELECT id FROM holidays WHERE id LIKE 'HOL%'`).all();

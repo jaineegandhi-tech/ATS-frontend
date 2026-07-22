@@ -2,6 +2,10 @@
 .env
 .env.local
 
+# SQLite temporary files
+*.db-shm
+*.db-wal
+
 # Logs
 logs
 *.log

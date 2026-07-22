@@ -1,3 +1,5 @@
+import { apiFetch } from './api';
+
 // Seed initial data into localStorage if not present
 export const STORAGE_KEYS = {
   USERS: 'hrms_users',
@@ -480,11 +482,56 @@ export function getStore(key) {
   try { return JSON.parse(localStorage.getItem(key)) || []; } catch { return []; }
 }
 
+const KEY_TO_API_MAP = {
+  hrms_candidates: '/candidates',
+  hrms_employees: '/employees',
+  hrms_job_openings: '/job-openings',
+  hrms_interviews: '/interviews',
+  hrms_leaves: '/leaves',
+  hrms_attendance: '/attendance',
+  hrms_payrolls: '/payroll',
+  hrms_assets: '/assets',
+  hrms_holidays: '/holidays',
+  hrms_recruitment_notifications: '/notifications',
+  hrms_approvals: '/approvals',
+  hrms_documents: '/documents',
+  hrms_telephony_interviews: '/telephony',
+  hrms_activity_logs: '/logs',
+  hrms_custom_roles: '/roles',
+};
+
+async function syncToBackend(key, data) {
+  const endpoint = KEY_TO_API_MAP[key];
+  if (!endpoint) return;
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+    if (Array.isArray(data) && data.length > 0) {
+      for (const item of data) {
+        if (item && item.id) {
+          await apiFetch(endpoint, {
+            method: 'POST',
+            body: JSON.stringify(item),
+            signal: controller.signal,
+          }).catch(() => {});
+        }
+      }
+    }
+    clearTimeout(timeoutId);
+  } catch {
+    // Silent catch — zero user impact if server offline
+  }
+}
+
 export function setStore(key, data) {
   localStorage.setItem(key, JSON.stringify(data));
   // Notify same-tab listeners and cross-tab listeners.
   window.dispatchEvent(new Event('hrms-data-updated'));
   window.dispatchEvent(new StorageEvent('storage', { key }));
+
+  // Non-blocking background API sync
+  syncToBackend(key, data);
 }
 
 export function addLog(action, userId, details = '') {

@@ -14,11 +14,11 @@ import jobOpeningsRouter from './routes/jobOpenings.js';
 import holidaysRouter from './routes/holidays.js';
 import notificationsRouter from './routes/notifications.js';
 
-// These route files do not exist yet — will be created in upcoming steps
-// import documentsRouter from './routes/documents.js';
-// import approvalsRouter from './routes/approvals.js';
-// import logsRouter from './routes/logs.js';
-// import telephonyRouter from './routes/telephony.js';
+import documentsRouter from './routes/documents.js';
+import approvalsRouter from './routes/approvals.js';
+import logsRouter from './routes/logs.js';
+import telephonyRouter from './routes/telephony.js';
+import rolesRouter from './routes/roles.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -50,12 +50,16 @@ app.use('/api/assets', assetsRouter);
 app.use('/api/job-openings', jobOpeningsRouter);
 app.use('/api/holidays', holidaysRouter);
 app.use('/api/notifications', notificationsRouter);
+app.use('/api/documents', documentsRouter);
+app.use('/api/approvals', approvalsRouter);
+app.use('/api/logs', logsRouter);
+app.use('/api/telephony', telephonyRouter);
+app.use('/api/roles', rolesRouter);
 
-// Routes to be wired in upcoming steps
-// app.use('/api/documents', documentsRouter);
-// app.use('/api/approvals', approvalsRouter);
-// app.use('/api/logs', logsRouter);
-// app.use('/api/telephony', telephonyRouter);
+// 404 handler for unhandled API routes
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: 'API endpoint not found' });
+});
 
 // Global error handler
 app.use((err, req, res, next) => {
